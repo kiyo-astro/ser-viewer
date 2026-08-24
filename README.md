@@ -1,253 +1,266 @@
 # SER Viewer
 
-天文（太陽・月・惑星）撮像で使われる **SER 動画ファイル**のプレイヤーです。
-[SER Player](https://github.com/cgarry/ser-player) の機能に加えて、**FITS 書き出し**を備えています。
-macOS と Windows の両方で動作します。
+**English** | [日本語](README.ja.md)
 
-![メインウィンドウ](docs/images/main-window.png)
+A player for **SER video files**, the format used in solar, lunar and planetary
+astronomy imaging. It offers the features of
+[SER Player](https://github.com/cgarry/ser-player) plus **FITS export**, and
+runs on both macOS and Windows.
+
+![Main window](docs/images/main-window.png)
 
 ---
 
-## 特徴
+## Features
 
-### 再生
-- SER ファイルの再生・一時停止・コマ送り・逆再生・ループ
-- フレームスライダー、フレーム番号入力、フレームごとの UTC タイムスタンプ表示
-- 開始／終了マーカー（`[` / `]`）で範囲を指定 → 再生も書き出しもその範囲だけ
-- 再生フレームレートの変更（記録された fps を自動で初期値に設定）
-- ズーム（5%〜1600%）、ドラッグでパン、ウィンドウに合わせる、等倍表示
-- 画素位置と **生の ADU 値**をステータスバーに表示
-- ドラッグ＆ドロップでファイルを開く、最近開いたファイル
+### Playback
+- Play, pause, step frame by frame, play in reverse, loop
+- Frame slider, frame number entry, per-frame UTC timestamp display
+- In/out markers (`[` / `]`) that limit both playback and every export
+- Adjustable playback rate, initialised from the frame rate recorded in the file
+- Zoom from 5% to 1600%, drag to pan, fit to window, actual size
+- Cursor position and the **raw ADU value** shown in the status bar
+- Drag and drop to open, recent file list
 
-### 画像処理（表示にリアルタイム反映）
-- デベイヤー（RGGB / GRBG / GBRG / BGGR、CMYG 系も近似対応、パターン手動指定可）
-- ゲイン、ガンマ、黒レベル、フレームごとのオートストレッチ
-- 彩度、RGB カラーバランス
-- チャンネルアライン（大気分散補正：R と B を画素単位でシフト）
-- モノクロ変換（輝度／平均／R・G・B 単独／2 チャンネル混合）
-- 階調反転、左右上下反転、90°単位の回転
-- 選択ボックスによるクロップ（ベイヤー位相を壊さないよう偶数座標にスナップ）
-- ヒストグラム（RGB 個別、対数表示、min/max/平均/中央値/黒つぶれ・白飛び率）
-- SER ヘッダの詳細表示（測定した実効ビット深度、記録 fps、総時間など）
+### Processing (applied live to the display)
+- Debayer (RGGB / GRBG / GBRG / BGGR, CMYG patterns approximated, pattern can be forced)
+- Gain, gamma, black level, per-frame auto stretch
+- Saturation and RGB colour balance
+- Channel alignment for atmospheric dispersion (shifts red and blue by pixels)
+- Monochrome conversion (luminance / average / single channel / two-channel mixes)
+- Invert, flip horizontally or vertically, rotate in 90° steps
+- Crop from a selection box, snapped to even coordinates so the Bayer phase survives
+- Histogram per channel, logarithmic scale, min/max/mean/median and clipping percentages
+- Full SER header inspector, including the measured effective bit depth
 
-### 書き出し
-| 形式 | 内容 |
+### Export
+| Format | Details |
 |---|---|
-| **FITS** | 3D キューブ 1 ファイル、または連番ファイル。詳細は下記 |
-| 静止画 | PNG / TIFF（8・16 bit）、BMP、JPEG |
-| 動画 | AVI（可逆：無圧縮 RGB・FFV1／非可逆：Motion JPEG・MPEG-4）、MP4（H.264） |
-| アニメーション GIF | フレーム遅延・最終フレーム遅延・色数・ループ指定 |
-| SER | トリミング・クロップした新しい SER ファイル（無処理なら画素値は完全に無劣化） |
+| **FITS** | One 3D cube or a numbered sequence - see below |
+| Still images | PNG / TIFF (8 and 16 bit), BMP, JPEG |
+| Video | AVI (lossless: uncompressed RGB, FFV1 / lossy: Motion JPEG, MPEG-4), MP4 (H.264) |
+| Animated GIF | Frame delay, final frame delay, colour count, looping |
+| SER | A trimmed and cropped copy; with processing off the pixel values are untouched |
 
 ---
 
-## FITS 書き出し
+## FITS export
 
-![FITS 書き出しダイアログ](docs/images/fits-export.png)
+![FITS export dialog](docs/images/fits-export.png)
 
-### 既定では画素値を一切加工しません
-「表示用の処理を適用」を **オフ**（既定）にすると、SER に記録された生の画素値が
-そのまま FITS に書かれます。12 bit のカメラなら 0–4095 の値がそのまま残るので、
-スタックや測光にそのまま使えます。オンにすると見た目どおりの画像が書き出されますが、
-リニアリティは失われます（その旨が HISTORY に記録されます）。
+### Pixel values are left alone by default
+With *Apply the display processing* **off** (the default), the pixel values
+recorded in the SER file are written to the FITS file unchanged. A 12 bit
+camera keeps its 0-4095 values, so the result can go straight into stacking or
+photometry. Switching it on writes what you see in the player instead, which
+destroys the linearity - and says so in the `HISTORY` cards.
 
-### レイアウト
-- **3D キューブ 1 ファイル** — モノクロなら `(フレーム数, 高さ, 幅)`。
-  カラーなら `(フレーム数, 3, 高さ, 幅)` の 4 次元になり、1 フレームだけ書き出した
-  場合は通常の `(3, 高さ, 幅)` RGB 画像になります。
-  フレームごとの時刻は `FRAMETIME` バイナリテーブル拡張（FRAME / MJD_UTC / DATE_OBS）に入ります。
-  ディスクへストリーミング書き込みするため、数十 GB の SER でもメモリを消費しません。
-- **連番ファイル** — `name_000001.fits`, `name_000002.fits` … AutoStakkert!、
-  Registax、Siril、PIPP などのスタックソフトに読ませる場合はこちら。
+### Layout
+- **One 3D cube** - monochrome data becomes `(frames, height, width)`. Colour
+  data becomes a 4D `(frames, 3, height, width)` cube, which collapses to an
+  ordinary `(3, height, width)` RGB image when a single frame is exported.
+  Per-frame times go into a `FRAMETIME` binary table extension
+  (FRAME / MJD_UTC / DATE_OBS). The cube is streamed to disk, so even a
+  multi-gigabyte SER file does not need matching memory.
+- **Numbered sequence** - `name_000001.fits`, `name_000002.fits`, … Use this to
+  feed AutoStakkert!, RegiStax, Siril, PIPP and similar stacking software.
 
-### カラーの扱い
-- **生センサーデータ（デベイヤーなし）** — ベイヤー配列のまま保存し、`BAYERPAT`、
-  `XBAYROFF`、`YBAYROFF` を書き込みます。スタック側でデベイヤーするのが定石なので、
-  ベイヤーのファイルを開いたときはこれが初期選択になります。
-- **デベイヤー後 RGB** — `NAXIS3 = 3`、`CTYPE3 = 'RGB'`。
-- **モノクロ** — カラー／ベイヤーをモノクロ化して 1 面で保存。
+### Colour handling
+- **Raw sensor data (no debayer)** - keeps the Bayer mosaic and writes
+  `BAYERPAT`, `XBAYROFF` and `YBAYROFF`. Stacking software normally prefers to
+  debayer itself, so this is preselected for Bayer files.
+- **Debayered RGB** - `NAXIS3 = 3` with `CTYPE3 = 'RGB'`.
+- **Monochrome** - colour or Bayer data collapsed to a single plane.
 
-### ビット深度
-`元のまま` / `16 bit 符号なし` / `32 bit 浮動小数点（0.0–1.0 に正規化）`。
-符号なし 16 bit は FITS の規約どおり `BZERO = 32768` を付けて保存します。
+### Bit depth
+`Keep the original depth` / `16 bit unsigned` / `32 bit float (normalised to
+0.0-1.0)`. Unsigned 16 bit data is written with `BZERO = 32768` as the FITS
+standard requires.
 
-### 書き込まれる主なヘッダキーワード
-| キーワード | 内容 |
+### Header keywords written
+| Keyword | Meaning |
 |---|---|
-| `DATE-OBS` / `MJD-OBS` / `DATE-END` | フレームの UTC 時刻（SER のタイムスタンプ由来） |
-| `OBSERVER` / `TELESCOP` / `INSTRUME` | SER ヘッダの値（ダイアログで上書き可） |
-| `OBJECT` / `EXPTIME` / `FOCALLEN` / `XPIXSZ` / `YPIXSZ` | ダイアログで任意に入力 |
-| `BAYERPAT` / `XBAYROFF` / `YBAYROFF` | 生ベイヤー出力時のみ |
-| `ROWORDER` | `TOP-DOWN`（既定）／上下反転時は `BOTTOM-UP` |
-| `SERFILE` / `SERFRAME` / `SERCOLID` / `SERDEPTH` / `SERFRAMS` / `NFRAMES` | 元 SER の素性 |
-| `HISTORY` | 加工の有無を明記 |
+| `DATE-OBS` / `MJD-OBS` / `DATE-END` | Frame times in UTC, taken from the SER timestamps |
+| `OBSERVER` / `TELESCOP` / `INSTRUME` | From the SER header, editable in the dialog |
+| `OBJECT` / `EXPTIME` / `FOCALLEN` / `XPIXSZ` / `YPIXSZ` | Optional, entered in the dialog |
+| `BAYERPAT` / `XBAYROFF` / `YBAYROFF` | Raw Bayer export only |
+| `ROWORDER` | `TOP-DOWN` by default, `BOTTOM-UP` when the rows are flipped |
+| `SERFILE` / `SERFRAME` / `SERCOLID` / `SERDEPTH` / `SERFRAMS` / `NFRAMES` | Provenance of the source file |
+| `HISTORY` | States whether the data was processed |
 
-> **行順について**：SER は先頭行が画像の上端です。FITS は本来下端からですが、
-> 天文ソフトの多くは `ROWORDER` キーワード（Siril 発祥、PixInsight なども解釈）を見ます。
-> 既定では画素を並べ替えずに `ROWORDER = 'TOP-DOWN'` を書きます。
-> 上下が逆になるソフトを使う場合はダイアログで「行を下から上に格納」を有効にしてください。
+> **About row order:** SER stores the top row of the image first. FITS
+> traditionally starts at the bottom, but most astronomy software reads the
+> `ROWORDER` keyword (introduced by Siril, understood by PixInsight and others).
+> SER Viewer keeps the pixels in place and writes `ROWORDER = 'TOP-DOWN'`. If
+> your software shows the image upside down, tick *Store rows bottom-up* in the
+> export dialog.
 
 ---
 
-## インストール
+## Installation
 
-### ビルド済みバイナリ
-[Releases](https://github.com/kiyo-astro/ser-viewer/releases) から取得できます（タグを打つと CI が自動生成します）。
+### Prebuilt binaries
+Download them from
+[Releases](https://github.com/kiyo-astro/ser-viewer/releases); pushing a tag
+builds them automatically.
 
-- **macOS** — `SER-Viewer-<版>-macOS-arm64.dmg`（Apple Silicon）または `-x86_64.dmg`（Intel）
-  DMG を開いて `SER Viewer.app` を Applications へドラッグします。
-  署名なしのため初回は Gatekeeper に止められます。**右クリック →「開く」** を選ぶか、
-  「システム設定 → プライバシーとセキュリティ」で「このまま開く」を押してください。
-- **Windows** — `SER-Viewer-<版>-windows-x64.zip`
-  展開して `SER Viewer.exe` を実行します。SmartScreen が出たら「詳細情報 → 実行」を選びます。
+- **macOS** - `SER-Viewer-<version>-macOS-arm64.dmg` (Apple silicon) or
+  `-x86_64.dmg` (Intel). Open the DMG and drag `SER Viewer.app` into
+  Applications. The app is unsigned, so Gatekeeper blocks the first launch:
+  **right click the app and choose Open**, or allow it under
+  System Settings → Privacy & Security.
+- **Windows** - `SER-Viewer-<version>-windows-x64.zip`. Unpack it and run
+  `SER Viewer.exe`. If SmartScreen appears, choose *More info → Run anyway*.
 
-### ソースから実行
+### Running from source
 ```bash
 git clone https://github.com/kiyo-astro/ser-viewer.git
 cd ser-viewer
 python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
 python -m pip install -r requirements.txt
-python -m serview            # または: python -m serview path/to/file.ser
+python -m serview            # or: python -m serview path/to/file.ser
 ```
-Python 3.10 以上が必要です。
+Python 3.10 or newer is required.
 
-> **Anaconda / conda 環境では venv を使ってください。**
-> conda の OpenCV（`libopencv_highgui`）は conda 版 Qt6 をロードするため、
-> pip の PySide6 が持つ Qt6 と二重に読み込まれ、同じ Qt クラスが 2 つ存在する状態に
-> なります。この状態では操作中にランダムに落ちます（実測で 3〜4 回に 1 回ほど）。
-> `pip install opencv-python-headless` を入れた venv では発生しません。
-> 配布用のビルド済みアプリは自前の Qt しか持たないため影響を受けません。
-
----
-
-## 使い方
-
-| 操作 | ショートカット |
-|---|---|
-| ファイルを開く | `Ctrl/Cmd + O` |
-| 再生／一時停止 | `Space`（画像のダブルクリックでも可） |
-| 前後のフレーム | `←` / `→` |
-| 10 フレーム移動 | `PageUp` / `PageDown` |
-| 最初／最後のフレーム | `Home` / `End` |
-| 開始／終了マーカー | `[` / `]`（解除は `Ctrl + [`） |
-| 拡大／縮小 | `Ctrl/Cmd + +` / `-` |
-| 等倍／ウィンドウに合わせる | `Ctrl/Cmd + 1` / `Ctrl/Cmd + 0` |
-| 選択ボックスモード | `Ctrl/Cmd + B` |
-| 処理ダイアログ | `Ctrl/Cmd + P` |
-| ヒストグラム | `Ctrl/Cmd + H` |
-| ファイル詳細 | `Ctrl/Cmd + I` |
-| FITS 書き出し | `Ctrl/Cmd + E` |
-| 画像・動画・SER 書き出し | `Ctrl/Cmd + Shift + E` |
-
-**クロップの指定**：処理ダイアログの「Use selection box」を押す → 画像上をドラッグ、
-または `Ctrl/Cmd + B` で選択モードにしてドラッグします。
-
-**ダイアログの大きさ**：処理・FITS 書き出し・フレーム書き出しの各ダイアログは、
-起動時に画面の高さに収まるよう自動で縮み、中身はスクロールします。
-ボタン（Export / Close など）は常に下端に固定されるので、
-ノート PC の画面でも押せなくなることはありません。
-
-![処理ダイアログ](docs/images/processing.png)
-
-![ヒストグラム](docs/images/histogram.png)
-
-## うまくいかないときは
-
-| 症状 | 対処 |
-|---|---|
-| 画面が真っ暗／極端に暗い | 処理ダイアログの「Auto stretch each frame」を有効にするか、ゲイン・ガンマを上げます。ヘッダのビット深度が誤っているファイルは自動補正しますが、実データが暗い場合は手動調整が要ります |
-| 色が不自然・市松模様に見える | ベイヤーパターンの自動判定が合っていない可能性があります。処理ダイアログの Pattern で RGGB / GRBG / GBRG / BGGR を切り替えてください |
-| 他のソフトで FITS の上下が逆になる | FITS 書き出しで「Store rows bottom-up」を有効にしてください |
-| スタックソフトが色を認識しない | 「Raw sensor data」で書き出すと `BAYERPAT` が付きます。デベイヤー後の RGB では付きません |
-| macOS で「開発元を確認できません」 | アプリを右クリックして「開く」を選ぶか、システム設定 → プライバシーとセキュリティで許可します |
-| ソースから実行すると突然落ちる／`Class Qt... is implemented in both` と表示される | Qt が二重にロードされています。conda 環境ではなく venv で実行してください（上記「ソースから実行」参照） |
+> **Use a venv, not a conda environment.**
+> The conda build of OpenCV (`libopencv_highgui`) loads conda's own Qt6, which
+> then coexists with the Qt6 that pip's PySide6 brings. With two copies of the
+> same Qt classes in one process the application crashes at random - roughly
+> one run in three or four in our testing. A venv with
+> `opencv-python-headless` does not have the problem, and the prebuilt
+> application ships only its own Qt, so it is unaffected.
 
 ---
 
-## 対応する SER フォーマット
+## Using the application
 
-| 項目 | 対応内容 |
+| Action | Shortcut |
 |---|---|
-| ColorID | MONO(0)、ベイヤー RGGB/GRBG/GBRG/BGGR(8–11)、CYYM/YCMY/YMCY/MYYC(16–19)、RGB(100)、BGR(101) |
-| ビット深度 | 1–8 bit（1 バイト/画素）、9–16 bit（2 バイト/画素） |
-| バイト順 | リトルエンディアン、ビッグエンディアン（`LittleEndian = 1` が**ビッグ**エンディアンを意味する仕様のクセに対応） |
-| タイムスタンプ | 末尾のフレーム別タイムスタンプに対応。UTC でなくローカル時刻で記録されている場合は自動判別して補正 |
-| 実効ビット深度 | ヘッダの `PixelDepthPerPlane` を鵜呑みにせず、実データを走査して本当の深度（10/12/14 bit など）を測定し、表示の明るさを補正 |
-| 壊れたファイル | ヘッダのフレーム数が実ファイルより多い場合は読める範囲に切り詰めて警告表示 |
+| Open a file | `Ctrl/Cmd + O` |
+| Play / pause | `Space` (or double click the image) |
+| Previous / next frame | `←` / `→` |
+| Jump 10 frames | `PageUp` / `PageDown` |
+| First / last frame | `Home` / `End` |
+| Set start / end marker | `[` / `]` (clear with `Ctrl + [`) |
+| Zoom in / out | `Ctrl/Cmd + +` / `-` |
+| Actual size / fit to window | `Ctrl/Cmd + 1` / `Ctrl/Cmd + 0` |
+| Selection box mode | `Ctrl/Cmd + B` |
+| Processing dialog | `Ctrl/Cmd + P` |
+| Histogram | `Ctrl/Cmd + H` |
+| File details | `Ctrl/Cmd + I` |
+| Export to FITS | `Ctrl/Cmd + E` |
+| Export images, video or SER | `Ctrl/Cmd + Shift + E` |
+
+**Setting a crop:** press *Use selection box* in the processing dialog and drag
+on the image, or press `Ctrl/Cmd + B` to enter selection mode and drag.
+
+**Dialog size:** the processing, FITS export and frame export dialogs shrink to
+fit the height of the screen when they open, and their contents scroll. The
+buttons stay pinned at the bottom, so they never end up off-screen on a laptop.
+
+![Processing dialog](docs/images/processing.png)
+
+![Histogram](docs/images/histogram.png)
+
+## Troubleshooting
+
+| Symptom | What to do |
+|---|---|
+| The image is black or very dark | Turn on *Auto stretch each frame* in the processing dialog, or raise the gain and gamma. Files that misreport their bit depth are corrected automatically, but genuinely faint data still needs adjusting |
+| Colours look wrong or the image looks like a checkerboard | The Bayer pattern may be misdetected. Force RGGB / GRBG / GBRG / BGGR under *Pattern* in the processing dialog |
+| Other software shows the exported FITS upside down | Enable *Store rows bottom-up* in the FITS export dialog |
+| Stacking software does not see the colour | Export as *Raw sensor data* so that `BAYERPAT` is written; debayered RGB does not carry it |
+| macOS says the developer cannot be verified | Right click the app and choose Open, or allow it under System Settings → Privacy & Security |
+| Running from source crashes at random, or `Class Qt... is implemented in both` appears | Two copies of Qt are loaded. Use a venv rather than a conda environment (see *Running from source*) |
 
 ---
 
-## 開発
+## SER format support
+
+| Aspect | Support |
+|---|---|
+| ColorID | MONO (0), Bayer RGGB/GRBG/GBRG/BGGR (8-11), CYYM/YCMY/YMCY/MYYC (16-19), RGB (100), BGR (101) |
+| Bit depth | 1-8 bit (1 byte per sample), 9-16 bit (2 bytes per sample) |
+| Byte order | Little endian and big endian, including the quirk that `LittleEndian = 1` actually means **big** endian |
+| Timestamps | Per-frame timestamps from the trailer; recorders that store local time instead of UTC are detected and corrected |
+| Effective bit depth | `PixelDepthPerPlane` is not trusted. The data is scanned to measure the real depth (10, 12, 14 bit …) so the image is displayed at the right brightness |
+| Damaged files | If the header claims more frames than the file holds, the count is clamped and a warning is shown |
+
+---
+
+## Development
 
 ```bash
 python -m pip install -r requirements-dev.txt
-QT_QPA_PLATFORM=offscreen pytest -q      # 44 件のテスト
+QT_QPA_PLATFORM=offscreen pytest -q      # 49 tests
 ```
 
-テスト用の SER ファイルは合成できます:
+Test SER files can be synthesised:
 ```bash
 python tests/tools/make_test_ser.py /tmp/test.ser --width 640 --height 480 \
     --frames 90 --depth 12 --colour BAYER_RGGB
 ```
 
-### 動作確認用のセルフテスト
+### Self-test
 ```bash
 python -m serview --selftest
-# 配布物に対しても実行できます
+# it also runs against a packaged build
 "./dist/SER Viewer.app/Contents/MacOS/SER Viewer" --selftest
 "dist\SER Viewer\SER Viewer.exe" --selftest
 ```
-一時ファイルに SER を書き出して読み戻し、デベイヤー・FITS 書き出し・PNG 書き出し・
-オフスクリーンでの GUI 起動まで一通り実行します。ビルド済みアプリでライブラリや Qt
-プラグインの同梱漏れがあればここで失敗するので、CI でもビルド後に必ず実行しています
-（実際、開発中に astropy のデータファイル漏れをこれで 2 件検出しました）。
+It writes a SER file to a temporary directory, reads it back, debayers it,
+exports FITS and PNG, and starts the Qt interface off-screen. A packaged build
+that is missing a library or a Qt plugin fails here, which is why CI runs it
+against every artefact it produces - it caught two missing astropy data files
+during development.
 
-### 配布物のビルド
+### Building the distributables
 ```bash
-./packaging/build_macos.sh --venv     # macOS: "dist/SER Viewer.app" と DMG
-packaging\build_windows.bat --venv    # Windows: "dist\SER Viewer\SER Viewer.exe" と zip
+./packaging/build_macos.sh --venv     # macOS: "dist/SER Viewer.app" and a DMG
+packaging\build_windows.bat --venv    # Windows: "dist\SER Viewer\SER Viewer.exe" and a zip
 ```
-`--venv` を付けると使い捨ての仮想環境を作ってビルドします（普段の環境の余計な
-ライブラリが混入しないので推奨）。
+`--venv` builds inside a throw-away virtual environment, which keeps whatever
+is installed in your everyday environment out of the bundle.
 
 ### CI
-`.github/workflows/build.yml` が以下を実行します。
-1. Ubuntu / macOS / Windows でテスト
-2. macOS（arm64・x86_64）と Windows（x64）の配布物をビルドし、起動確認
-3. `v*` のタグを push したときは Release を作成して DMG と zip を添付
+`.github/workflows/build.yml` does the following:
+1. Runs the tests on Ubuntu, macOS and Windows
+2. Builds macOS (arm64 and x86_64) and Windows (x64) artefacts and runs the
+   self-test against each one
+3. Creates a release with the DMGs and the zip attached when a `v*` tag is pushed
 
-### パッケージングの注意点
-- `packaging/pyinstaller_hooks/hook-astropy.py` で astropy 用の標準フックを
-  差し替えています。標準フックは `collect_submodules("astropy")` を呼ぶため
-  `astropy.visualization.wcsaxes` を import してしまい、matplotlib の無い
-  ビルドマシンでは**ビルド自体が失敗**します。
-- ビルドは必ず `--venv`（または CI のようなクリーンな環境）で行ってください。
-  普段使いの Anaconda 環境などでビルドすると pandas・pyarrow・別系統の Qt が
-  紛れ込み、バンドルが数百 MB 肥大化したうえ Qt が二重ロードされます。
+### Packaging notes
+- `packaging/pyinstaller_hooks/hook-astropy.py` replaces the stock astropy
+  hook. The stock hook calls `collect_submodules("astropy")`, which imports
+  `astropy.visualization.wcsaxes`; on a build machine without matplotlib that
+  **aborts the build itself**.
+- Always build with `--venv`, or in a clean environment such as CI. Building
+  inside an everyday Anaconda environment pulls in pandas, pyarrow and a second
+  Qt, which adds hundreds of megabytes and loads Qt twice.
 
-### 構成
+### Layout
 ```
 serview/
-├── ser/          SER の読み書き（format.py / reader.py / writer.py）
-├── imaging/      デベイヤー・階調・色処理・ヒストグラム
+├── ser/          SER reading and writing (format.py / reader.py / writer.py)
+├── imaging/      debayer, tone and colour processing, histogram
 ├── export/       fits.py / images.py / video.py / ser.py
-└── ui/           Qt (PySide6) の画面
+└── ui/           the Qt (PySide6) interface
 ```
 
 ---
 
-## 開発・謝辞
+## Credits
 
 Application developed by Kiyoaki Okudaira - Kyushu University Hanada Lab
 (Space Systems Dynamics)
 
 Supported by JSPS KAKENHI Grant Number JP26H02172.
 
-## ライセンス
+## License
 
-MIT License。
+MIT License.
 
-SER Player（Chris Garry 作、GPL-3.0）に着想を得ていますが、コードは流用せず
-新規に実装しています。SER フォーマットの仕様は Heiko Wilkens / Grischa Hahn による
-公開仕様書に基づきます。
-PySide6 / Qt、NumPy、OpenCV、Astropy、Pillow を使用しています。
+Inspired by SER Player by Chris Garry (GPL-3.0); no code was taken from it,
+this is an independent implementation. The SER format follows the public
+specification by Heiko Wilkens and Grischa Hahn. Built with PySide6 / Qt,
+NumPy, OpenCV, Astropy and Pillow.
