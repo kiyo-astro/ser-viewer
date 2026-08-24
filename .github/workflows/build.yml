@@ -45,9 +45,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - runner: macos-14      # Apple silicon
+          - runner: macos-14         # Apple silicon
             arch: arm64
-          - runner: macos-13      # Intel
+          - runner: macos-15-intel   # Intel (macos-13 was retired by GitHub)
             arch: x86_64
     steps:
       - uses: actions/checkout@v4
