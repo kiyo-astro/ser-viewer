@@ -24,9 +24,10 @@ if not exist "dist\SER Viewer\SER Viewer.exe" (
 )
 
 REM Name the archive after the version, the way the macOS DMG is named.
-for /f "delims=" %%v in ('%PYTHON% -c "import re,pathlib;print(re.search(r'__version__ = .([^\']+).', pathlib.Path('serview/__init__.py').read_text()).group(1))"') do set VERSION=%%v
-if "!VERSION!"=="" (
-    echo Could not read the version from serview\__init__.py
+for /f "delims=" %%v in ('%PYTHON% -c "import runpy;print(runpy.run_path('serview/__init__.py')['__version__'])"') do set VERSION=%%v
+echo !VERSION!| findstr /r /c:"^[0-9][0-9.]*$" >nul
+if errorlevel 1 (
+    echo Could not read a sensible version from serview\__init__.py: "!VERSION!"
     exit /b 1
 )
 set ZIP=dist\SER-Viewer-!VERSION!-windows-x64.zip

@@ -27,7 +27,7 @@ test -d "$APP" || { echo "the .app bundle was not produced" >&2; exit 1; }
 # Ad-hoc signature: without it macOS refuses to launch an unsigned arm64 bundle.
 codesign --force --deep --sign - "$APP"
 
-VERSION="$("$PYTHON" -c 'import re,pathlib;print(re.search(r"__version__ = \"([^\"]+)\"", pathlib.Path("serview/__init__.py").read_text()).group(1))')"
+VERSION="$("$PYTHON" -c "import runpy;print(runpy.run_path('serview/__init__.py')['__version__'])")"
 ARCH="$(uname -m)"
 DMG="dist/SER-Viewer-${VERSION}-macOS-${ARCH}.dmg"
 STAGING="$(mktemp -d)"
