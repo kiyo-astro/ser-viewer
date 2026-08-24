@@ -98,7 +98,7 @@ macOS と Windows の両方で動作します。
   DMG を開いて `SER Viewer.app` を Applications へドラッグします。
   署名なしのため初回は Gatekeeper に止められます。**右クリック →「開く」** を選ぶか、
   「システム設定 → プライバシーとセキュリティ」で「このまま開く」を押してください。
-- **Windows** — `SER-Viewer-windows-x64.zip`
+- **Windows** — `SER-Viewer-<版>-windows-x64.zip`
   展開して `SER Viewer.exe` を実行します。SmartScreen が出たら「詳細情報 → 実行」を選びます。
 
 ### ソースから実行

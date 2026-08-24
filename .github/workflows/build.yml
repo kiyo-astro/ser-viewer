@@ -92,7 +92,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: SER-Viewer-windows-x64
-          path: dist/SER-Viewer-windows.zip
+          path: dist/SER-Viewer-*-windows-x64.zip
           if-no-files-found: error
 
   release:
